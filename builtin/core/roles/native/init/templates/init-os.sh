@@ -18,6 +18,15 @@
 swapoff -a
 sed -i /^[^#]*swap*/s/^/\#/g /etc/fstab
 
+# For Rocky Linux, mask swap.target to prevent swap from being enabled after reboot
+# This is required for Kubernetes to start properly after system reboot
+if [ -f /etc/os-release ]; then
+  . /etc/os-release
+  if [ "$ID" = "rocky" ] || [ "$ID" = "rhel" ] || [ "$ID" = "centos" ]; then
+    systemctl --now mask swap.target 2>/dev/null || true
+  fi
+fi
+
 # See https://github.com/kubernetes/website/issues/14457
 if [ -f /etc/selinux/config ]; then
   sed -ri 's/SELINUX=enforcing/SELINUX=disabled/' /etc/selinux/config
